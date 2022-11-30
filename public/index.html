@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Solution Validator</title>
+    <script>
+      function checkIsSolved() {
+        fetch("/solved")
+          .then(async (data) => {
+            document.getElementById("response").innerHTML = await data.text();
+          })
+          .catch((err) => {
+            document.getElementById("errors").innerHTML = err;
+          });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app" class="center">
+      <h1 id="title" class="center">Solution Validator</h1>
+      <p id="solvedYet">
+        <button id="solvedYet-btn" class="center" onClick="checkIsSolved()">
+          Solved?
+        </button>
+      </p>
+      <p id="errors"></p>
+      <p id="response"></p>
+      <br />
+      <br />
+      <p id="infos">
+        <h3>Challenge Informations</h3>
+        <p>
+          To make your start easier, Santa created you a wallet and funded it with 1.5 ETH. <br>
+        </p>
+        <p>Setup address: 
+          <span id="setup-address">##SETUP-ADDR##</span>
+        </p>
+        <p>Your private key:
+          <span id="privatekey-address">##PRIVATE-KEY##</span>
+        </p>
+        <p><a href="/Setup.sol">Setup.sol (SourceCode)</a></p>
+        <p><a href="/Challenge.sol">Challenge.sol (SourceCode)</a></p>
+      </p>
+    </div>
+  </body>
+</html>
