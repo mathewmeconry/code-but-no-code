@@ -6,10 +6,21 @@
       function checkIsSolved() {
         fetch("/solved")
           .then(async (data) => {
-            document.getElementById("response").innerHTML = await data.text();
+            document.getElementById("solved-response").innerHTML = await data.text();
           })
           .catch((err) => {
-            document.getElementById("errors").innerHTML = err;
+            document.getElementById("solved-errors").innerHTML = err;
+          });
+      }
+
+      function sign() {
+        const msg = document.getElementById('sign-msg').value
+        fetch(`/sign?msg=${msg}`)
+          .then(async (data) => {
+            document.getElementById("sign-response").innerHTML = await data.text();
+          })
+          .catch((err) => {
+            document.getElementById("sign-errors").innerHTML = err;
           });
       }
     </script>
@@ -17,15 +28,6 @@
   <body>
     <div id="app" class="center">
       <h1 id="title" class="center">Solution Validator</h1>
-      <p id="solvedYet">
-        <button id="solvedYet-btn" class="center" onClick="checkIsSolved()">
-          Solved?
-        </button>
-      </p>
-      <p id="errors"></p>
-      <p id="response"></p>
-      <br />
-      <br />
       <p id="infos">
         <h3>Challenge Informations</h3>
         <p>
@@ -40,6 +42,29 @@
         <p><a href="/Setup.sol">Setup.sol (SourceCode)</a></p>
         <p><a href="/Challenge.sol">Challenge.sol (SourceCode)</a></p>
       </p>
+      <br />
+      <br />
+      <h3>Get Santas signature</h3>
+      <p id="msgSigner">
+        <textarea id="sign-msg"></textarea>
+        <br />
+        <button id="msgSigner-btn" class="center" onClick="sign()">
+          Sign Message
+        </button>
+      </p>
+      <p id="sign-errors"></p>
+      <p id="sign-response"></p>
+      <h3>Have you solved the challenge?</h3>
+      <p id="solvedYet">
+        <button id="solvedYet-btn" class="center" onClick="checkIsSolved()">
+          Solved?
+        </button>
+      </p>
+      <p id="solved-errors"></p>
+      <p id="solved-response"></p>
+      <br />
+      <br />
+      
     </div>
   </body>
 </html>

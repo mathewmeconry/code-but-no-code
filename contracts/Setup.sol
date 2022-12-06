@@ -8,7 +8,7 @@ contract Setup {
     Challenge public challenge;
 
     constructor() {
-        challenge = new Challenge();
+        challenge = new Challenge(msg.sender);
     }
 
     function isSolved() public view returns (bool) {

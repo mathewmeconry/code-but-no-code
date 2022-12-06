@@ -1,30 +1,40 @@
-# CTF EVM PUZZLE
+# Code but no code
 
 This is a challenge for the Hackvent 2022.
 
 ## Description
 
-Sanfa loves puzzles and hopes you do too ;)  
+Sanfa loves puzzles and hopes you do too ;)\
 Find the secret inputs which fullfile the requirements and gives you the flag.
 
 ## Vulnerablity
 
-There is no vulnerability. Just a puzzle to solve.  
-The challenge name hints to these contracts mentioned in the solution, because the popular block explorer etherscan doesn't display any code at these addresses eventho there is code.  
+[ECDSA malleability](https://www.derpturkey.com/inherent-malleability-of-ecdsa-signatures/)
+is a vulnerability in the signature verification of ECDSA based electornic
+signatures.\
+Simply put: When inverting the `s` value to `-s` by calculating
+`0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s` and
+then change the `recoveryParam` by 1 up or down, depending on the previous
+value, one can create the same signature.\
+It hasn't really a real world implication but could get one, so the contracts
+should check for the lower s value as defined in
+[EIP-2](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2.md#specification).\
+Openzepplin follows this approach correctly
+[https://github.com/OpenZeppelin/openzeppelin-contracts/blob/206a2394481ec1af16d0e0acf216bbffedde405b/contracts/utils/cryptography/ECDSA.sol#L147](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/206a2394481ec1af16d0e0acf216bbffedde405b/contracts/utils/cryptography/ECDSA.sol#L147)
 
 ## Solution
 
-These are the restrictions the user needs to pass:  
+These are the restrictions the user needs to pass:
+
 - target must be a contract
-- target address must starts with the first 19 bytes 0  
-- the return value of the call to the target has to match   
+- target address must starts with the first 19 bytes 0
 
-Ethereum has some precompiled contracts deployed at the addresses 0x01 - 0x09.
+Ethereum has some precompiled contracts deployed at the addresses 0x01 - 0x09.\
+One of them is ecrecover on 0x01.\
+Use this contract with the stuff learned about ECDSA ammleability and exploit
+the contract.
 
-One of them (0x02) is a contract to hash the given data with sha256.  
-So find a value whichs sha256 hash starts with 0x00133755.
-
-One example is 0x42714abf2c99db93  
+See the example `attack.ts` for a working implementation.
 
 ## Flag
 

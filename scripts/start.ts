@@ -1,24 +1,25 @@
-import {JsonRpcProvider} from "@ethersproject/providers";
-import {BigNumber, Contract, ethers, Wallet} from "ethers";
+import { JsonRpcProvider } from "@ethersproject/providers";
+import { BigNumber, Contract, ethers, Wallet } from "ethers";
 import Ganache from "ganache";
 import express from "express";
 import path from "path";
 import fs from "fs/promises";
 
-import Setup from '../artifacts/contracts/Setup.sol/Setup.json'
+import Setup from "../artifacts/contracts/Setup.sol/Setup.json";
 
 async function main() {
-  const {attackerWallet, setup} = await ganache();
-  expressServer(attackerWallet, setup);
+  const { attackerWallet, setup, randomWallet } = await ganache();
+  expressServer(attackerWallet, setup, randomWallet);
 }
 
 async function expressServer(
   attackerWallet: Wallet,
   setup: Contract,
+  randomWallet: Wallet,
 ) {
   const app = express();
   const indexPage = await fs.readFile(
-    path.join(__dirname, "../public/index.html")
+    path.join(__dirname, "../public/index.html"),
   );
   const finalIndexPage = indexPage
     .toString()
@@ -40,6 +41,23 @@ async function expressServer(
       res.send("Nope!");
     }
   });
+
+  app.get("/sign", async (req, res) => {
+    let msg = req.query.msg as string;
+    while (true) {
+      const signature = await randomWallet.signMessage(msg);
+      const splitted = ethers.utils.splitSignature(signature);
+      if (splitted.v === 27) {
+        res.send({
+          msg,
+          signature,
+        });
+        break;
+      } else {
+        msg += "_"
+      }
+    }
+  });
   app.use(express.static(path.join(__dirname, "../public/")));
 
   app.listen("8080", () => {
@@ -50,6 +68,7 @@ async function expressServer(
 async function ganache(): Promise<{
   attackerWallet: Wallet;
   setup: Contract;
+  randomWallet: Wallet;
 }> {
   return new Promise(async (resolve, reject) => {
     const server = Ganache.server({
@@ -72,7 +91,7 @@ async function ganache(): Promise<{
 
       const initialAccounts = server.provider.getInitialAccounts();
       console.log(
-        `Initial Accounts: ${Object.keys(initialAccounts).join(",")}`
+        `Initial Accounts: ${Object.keys(initialAccounts).join(",")}`,
       );
 
       console.log("Draining all initial accounts");
@@ -81,14 +100,16 @@ async function ganache(): Promise<{
         await initialAccount.connect(ethersProvider).sendTransaction({
           to: randomWallet.address,
           value: BigNumber.from(initialAccounts[key].balance).sub(
-            BigNumber.from(21000).mul(3500000000)
+            BigNumber.from(21000).mul(3500000000),
           ),
         });
       }
       console.log(
-        `Drained: ${randomWallet.address} = ${ethers.utils.formatEther(
-          await ethersProvider.getBalance(randomWallet.address)
-        )} ETH`
+        `Drained: ${randomWallet.address} = ${
+          ethers.utils.formatEther(
+            await ethersProvider.getBalance(randomWallet.address),
+          )
+        } ETH`,
       );
 
       const setup = await deploy(randomWallet);
@@ -98,14 +119,17 @@ async function ganache(): Promise<{
       console.log(`Address: ${attackerWallet.address}`);
       console.log(`Private Key: ${attackerWallet.privateKey}`);
       console.log(
-        `Funds: ${ethers.utils.formatEther(
-          await ethersProvider.getBalance(attackerWallet.address)
-        )} ETH`
+        `Funds: ${
+          ethers.utils.formatEther(
+            await ethersProvider.getBalance(attackerWallet.address),
+          )
+        } ETH`,
       );
       console.log("Ready!");
       resolve({
         attackerWallet,
-        setup
+        setup,
+        randomWallet,
       });
     });
   });
@@ -115,15 +139,14 @@ async function deploy(wallet: Wallet) {
   console.log("Deploying contracts");
   const setupFactory = new ethers.ContractFactory(
     Setup.abi,
-    Setup.bytecode
-  );
+    Setup.bytecode,
+  ).connect(wallet);
 
   const setup = await setupFactory.connect(wallet).deploy();
   console.log(`Deployed Setup: ${setup.address}`);
 
   return setup;
 }
-
 
 async function fundAttacker(wallet: Wallet) {
   const randomWallet = Wallet.createRandom();
